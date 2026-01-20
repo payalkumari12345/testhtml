@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GK Mega Quiz - Vikram Das</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #eef2f3; padding: 0; margin: 0; color: #333; }
+        
+        /* New Header Style */
+        .header-banner {
+            background: #2c3e50;
+            color: #ffffff;
+            padding: 10px 0;
+            font-size: 24px;
+            font-weight: bold;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .container { max-width: 800px; margin: 40px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; }
+        
+        #timer { font-size: 22px; font-weight: bold; color: #d9534f; position: fixed; top: 60px; right: 20px; background: white; padding: 15px; border: 2px solid #d9534f; border-radius: 8px; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        .question { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .question p { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+        
+        label { display: block; margin: 8px 0; cursor: pointer; padding: 5px; border-radius: 4px; transition: 0.2s; }
+        label:hover { background-color: #f0f7ff; }
+        
+        input[type="text"] { width: 100%; padding: 12px; font-size: 16px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        
+        button { width: 100%; background: #28a745; color: white; border: none; padding: 15px; cursor: pointer; font-size: 18px; border-radius: 5px; font-weight: bold; }
+        button:hover { background: #218838; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        #resultSection { display: none; text-align: center; padding: 40px; }
+        .congrats-msg { color: #28a745; font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+        .score-display { font-size: 48px; color: #2c3e50; margin: 20px 0; }
+        .reset-btn { background: #007bff; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="header-banner">
+    <marquee behavior="scroll" direction="left" scrollamount="10">
+        VIKRAM DAS WEBSITE — WELCOME TO THE GENERAL KNOWLEDGE MEGA QUIZ — BEST OF LUCK!
+    </marquee>
+</div>
+
+<div id="timer">Time Left: 30:00</div>
+
+<div class="container" id="quizContainer">
+    <h1>General Knowledge Quiz</h1>
+    <p style="text-align: center; color: #666;">You have 30 minutes to complete the test.</p>
+    <input type="text" id="userName" placeholder="Enter Your Full Name" required>
+    
+    <form id="quizForm">
+        <div id="questionsContainer"></div>
+        <button type="submit" id="submitBtn">Submit Quiz</button>
+    </form>
+</div>
+
+<div class="container" id="resultSection">
+    <div class="congrats-msg">🎉 Congratulations!</div>
+    <p>You have successfully completed the test.</p>
+    <div id="displayUser" style="font-size: 18px; margin: 10px 0;"></div>
+    <div class="score-display">Score: <span id="finalScore">0</span> / 20</div>
+    <button onclick="location.reload()" class="reset-btn">Take Quiz Again</button>
+</div>
+
+<script>
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyWrUxt0I9eQHeplhA7TTn0pywDPt1hYFh9mm1_MRd504KkZbYeCD8epgPT4oxmT_0Gw/exec';
+
+const questions = [
+    { q: "Who is known as the Father of the Indian Constitution?", a: "B.R. Ambedkar", options: ["Mahatma Gandhi", "B.R. Ambedkar", "Jawaharlal Nehru", "Sardar Patel"] },
+    { q: "Which planet is known as the Red Planet?", a: "Mars", options: ["Venus", "Mars", "Jupiter", "Saturn"] },
+    { q: "What is the capital of France?", a: "Paris", options: ["London", "Berlin", "Paris", "Madrid"] },
+    { q: "Which is the largest ocean on Earth?", a: "Pacific Ocean", options: ["Atlantic", "Indian", "Arctic", "Pacific Ocean"] },
+    { q: "Who painted the Mona Lisa?", a: "Leonardo da Vinci", options: ["Picasso", "Van Gogh", "Leonardo da Vinci", "Dalí"] },
+    { q: "What is the national animal of India?", a: "Tiger", options: ["Lion", "Elephant", "Tiger", "Leopard"] },
+    { q: "Which element has the chemical symbol 'O'?", a: "Oxygen", options: ["Gold", "Oxygen", "Osmium", "Oxalate"] },
+    { q: "Which is the smallest continent in the world?", a: "Australia", options: ["Asia", "Europe", "Australia", "Africa"] },
+    { q: "Who wrote 'Romeo and Juliet'?", a: "William Shakespeare", options: ["Charles Dickens", "William Shakespeare", "Mark Twain", "Leo Tolstoy"] },
+    { q: "What is the largest planet in our solar system?", a: "Jupiter", options: ["Earth", "Saturn", "Jupiter", "Neptune"] },
+    { q: "Which country is known as the Land of the Rising Sun?", a: "Japan", options: ["China", "Japan", "Thailand", "Korea"] },
+    { q: "What is the capital of India?", a: "New Delhi", options: ["Mumbai", "Kolkata", "New Delhi", "Chennai"] },
+    { q: "Who discovered Penicillin?", a: "Alexander Fleming", options: ["Marie Curie", "Isaac Newton", "Alexander Fleming", "Louis Pasteur"] },
+    { q: "Which is the tallest mountain in the world?", a: "Mount Everest", options: ["K2", "Mount Everest", "Kangchenjunga", "Lhotse"] },
+    { q: "What is the hardest natural substance on Earth?", a: "Diamond", options: ["Gold", "Iron", "Diamond", "Platinum"] },
+    { q: "Which gas do plants absorb from the atmosphere?", a: "Carbon Dioxide", options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"] },
+    { q: "Who is the author of 'Harry Potter'?", a: "J.K. Rowling", options: ["Stephen King", "J.K. Rowling", "George R.R. Martin", "Roald Dahl"] },
+    { q: "What is the currency of Japan?", a: "Yen", options: ["Yuan", "Yen", "Dollar", "Euro"] },
+    { q: "Which organ in the human body pumps blood?", a: "Heart", options: ["Lungs", "Brain", "Heart", "Liver"] },
+    { q: "How many colors are there in a rainbow?", a: "7", options: ["5", "6", "7", "8"] }
+];
+
+const container = document.getElementById('questionsContainer');
+questions.forEach((item, index) => {
+    container.innerHTML += `
+        <div class="question">
+            <p>${index + 1}. ${item.q}</p>
+            ${item.options.map(opt => `
+                <label><input type="radio" name="q${index}" value="${opt}"> ${opt}</label>
+            `).join('')}
+        </div>
+    `;
+});
+
+let timeLeft = 30 * 60; 
+const timerElement = document.getElementById('timer');
+
+const countdown = setInterval(() => {
+    let minutes = Math.floor(timeLeft / 60);
+    let seconds = timeLeft % 60;
+    timerElement.innerHTML = `Time Left: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    
+    if (timeLeft <= 0) {
+        clearInterval(countdown);
+        alert("Time is up! Your quiz will be submitted automatically.");
+        submitQuiz();
+    }
+    timeLeft--;
+}, 1000);
+
+document.getElementById('quizForm').onsubmit = function(e) {
+    e.preventDefault();
+    if(confirm("Do you want to submit your quiz?")) {
+        submitQuiz();
+    }
+};
+
+function submitQuiz() {
+    clearInterval(countdown);
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Submitting...";
+
+    let score = 0;
+    const nameInput = document.getElementById('userName').value;
+    const name = nameInput || "Anonymous";
+
+    questions.forEach((item, index) => {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        if (selected && selected.value === item.a) {
+            score++;
+        }
+    });
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, score: score })
+    }).then(() => {
+        showResults(name, score);
+    }).catch(err => {
+        console.error(err);
+        showResults(name, score);
+    });
+}
+
+function showResults(name, score) {
+    document.getElementById('timer').style.display = 'none';
+    document.getElementById('quizContainer').style.display = 'none';
+    const resSection = document.getElementById('resultSection');
+    resSection.style.display = 'block';
+    document.getElementById('displayUser').innerHTML = `<strong>Candidate Name:</strong> ${name}`;
+    document.getElementById('finalScore').innerText = score;
+}
+</script>
+</body>
+</html>
